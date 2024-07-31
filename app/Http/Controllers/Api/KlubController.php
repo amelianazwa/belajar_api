@@ -87,34 +87,45 @@ class KlubController extends Controller
     public function update(Request $request, string $id)
     {
         $klub = Klub::findOrFail($id);
-        if ($validator->fails()) {
-            return response()->json([
-                'success' => false,
-                'message' => 'data tidak valid',
-                'errors' => $validator->errors(),
-            ], 400);
+       $validator = Validator::make($request->all(), [
+        'nama_klub' => 'required',
+        'logo' => 'required|image|max:2048',
+        'id_liga' => 'required',
+    ]);
+
+    if ($validator->fails()){
+        return response()->json([
+            'success' => false,
+            'message' => 'Data tidak valid',
+            'errors' => $validator->errors(),
+        ],422);
+    }
+
+    try {
+        $klub = Klub::findOrFail($id);
+
+        if ($request->hasFile('logo')) {
+            // delete foto / logo lama
+            Storage::delete($klub->logo);
+            $path = $request->file('logo')->store('public/logo');
+            $klub->logo = $path;
         }
-
-        try {
-
-            if($request->hasFile('logo')){
-                Storage::delete($klub, logo);
-                $path = $request->file('logo')->store('public/logo');
-                $klub->logo = $path;
-            }
-            $klub->update($request->only(['nama_klub', 'id_klub']));
-            return response()->json([
-                'success' => true,
-                'message' => 'data berhasil diperbarui',
-                'data' => $klub,
-            ], 200);
-        } catch (\Throwable $e) {
-            return response()->json([
+        $klub->nama_klub = $request->nama_klub;
+        $klub->id_liga = $request->id_liga;
+        $klub->save();
+        return response()->json([
+            'success' => true,
+            'message' => 'Data berhassil diperbarui',
+            'data' => $klub,
+        ], 200);
+    } catch (Exception $e) {
+         return response()->json([
                 'success' => false,
                 'message' => 'terjadi kesalahan',
                 'errors' => $e->getMessage(),
-            ], 500);
-        }
+      ],500);
+}
+
     }
 
     /**

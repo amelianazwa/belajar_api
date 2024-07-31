@@ -107,13 +107,12 @@ class PemainController extends Controller
      */
     public function update(Request $request, string $id)
     {
-        $validator = Validator::make($request->all(),[
+        $validator = Validator::make($request->all(), [
             'nama_pemain' => 'required',
-            'foto' => 'nullable|image|mimes:png,jpg',
+            'foto' => 'required|image|mimes:png,jpg',
             'tgl_lahir' => 'required',
             'harga_pasar' => 'required|numeric',
-            'posisi' => 'required|in:gk,df, mf, fw',
-            'negara' => 'required',
+            'posisi' => 'required|in:gk,df,mf,fw',
             'id_klub' => 'required',
         ]);
 
@@ -128,7 +127,7 @@ class PemainController extends Controller
         try {
             // upload image
             $path = $request->file('foto')->store('public/foto');
-            $pemain = Pemain::finOrfail($id);
+            $pemain = Pemain::findOrFail($id);
             $pemain->nama_pemain = $request->nama_pemain;
             $pemain->foto = $path;
             $pemain->tgl_lahir = $request->tgl_lahir;
@@ -142,13 +141,14 @@ class PemainController extends Controller
                 'message' => 'data berhasil dibuat',
                 'data' => $pemain,
             ], 201);
-        } catch (\Exception $e){
+        } catch (\Exception $e) {
             return response()->json([
-                'succes' => false,
+                'success' => false,
                 'message' => 'terjadi kesalahan',
                 'errors' => $e->getMessage(),
             ],500);
-        }
+}
+
     }
 
     /**
